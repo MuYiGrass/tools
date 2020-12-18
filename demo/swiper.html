@@ -1,0 +1,181 @@
+<html lang="en">
+<style>
+    body {
+        margin: 0;
+        background: #fefefe;
+    }
+
+    .wrap {
+        width: 50vw;
+        height: 50vh;
+        overflow: hidden;
+        box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.1);
+        position: relative;
+        background: #666;
+        margin-right: 50vw;
+        transform: translate(25vw, 10vh)
+    }
+
+    ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        width: 50vw;
+        display: flex;
+    }
+
+    li {
+        float: left;
+        width: 50vw;
+        flex-shrink: 0
+    }
+
+    .list p {
+        vertical-align: top;
+        text-align: center;
+        color: white;
+    }
+
+    .dot {
+        width: 50vw;
+        display: flex;
+        justify-content: center;
+        position: absolute;
+        bottom: 20px;
+    }
+
+    .dot li {
+        width: 10px;
+        height: 10px;
+        border-radius: 10px;
+        background: #fff;
+        margin: 0 5px;
+        transition: 0.2s;
+        box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .dot li.active {
+        width: 20px;
+    }
+</style>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="wrap">
+        <ul class="list">
+            <li class="item">
+                <p>1</p>
+            </li>
+            <li class="item">
+                <p>2</p>
+            </li>
+            <li class="item">
+                <p>3</p>
+            </li>
+            <li class="item">
+                <p>4</p>
+            </li>
+        </ul>
+        <ul class="dot">
+            <!--这里是下面的小点-->
+            <li class="active"></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+    </div>
+</body>
+
+<script>
+    let wrap = document.querySelector('.wrap')
+    let list = wrap.querySelector('.list')
+    let dot = wrap.querySelectorAll('.dot li')
+
+    let startPoint = {} // 鼠标点击起始位置
+    let distance = {} // 移动距离
+    let startOffset = 0 // 开始点击item的位置
+    let translateX = 0 // 移动距离
+    let now = 0 // 当前item位置
+    let imgWidth = wrap.clientWidth;
+    let proportion = 0.3 // 拖动比例
+    let isMove = false
+
+    list.innerHTML += list.innerHTML
+
+    function handler(e) {
+        mouseMove(e)
+    }
+
+    window.addEventListener('mousedown', (e) => {
+        mouseDown(e)
+        window.addEventListener('mousemove', handler)
+    })
+
+    window.addEventListener('mouseup', (e) => {
+        mouseUp(e)
+        window.removeEventListener('mousemove', handler)
+    })
+
+    function mouseDown(e) {
+        startPoint = {
+            x: e.clientX,
+            y: e.clientY,
+        }
+
+        if (now == 0) {
+            now = dot.length
+        } else if (now == dot.length * 2 - 1) {
+            now = dot.length - 1
+        }
+        translateX = now * -imgWidth
+        startOffset = translateX
+        list.style.transition = 'none'
+        list.style.transform = `translateX(${translateX}px)`
+    }
+
+    function mouseMove(e) {
+        distance = {
+            x: e.clientX - startPoint.x,
+            y: e.clientY - startPoint.y,
+        }
+
+        if (Math.abs(distance.x) - Math.abs(distance.y) > 5) {
+            isMove = true;
+            e.preventDefault();
+        } else if (Math.abs(distance.x) - Math.abs(distance.y) < 5) {
+            isMove = false;
+        }
+        if (isMove) {
+            translateX = startOffset + distance.x;
+            list.style.transform = `translateX(${translateX}px)`;
+        }
+    }
+
+    function mouseUp(e) {
+        if (Math.abs(distance.x) > imgWidth * proportion) {
+            now -= distance.x / Math.abs(distance.x);
+        }
+        Array.from(dot).forEach((item, index) => {
+            item.classList.remove('active');
+            if (index === (now % dot.length)) {
+                item.classList.add('active');
+            }
+        })
+
+        if (isMove) {
+            translateX = now * -imgWidth;
+            list.style.transition = '0.3s';
+            list.style.transform = `translateX(${translateX}px)`;
+        }
+    }
+</script>
+
+
+
+</html>
