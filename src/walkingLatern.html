@@ -1,0 +1,58 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>走马灯</title>
+</head>
+
+<body>
+    <div class="container">
+        <marquee>1223333</marquee>
+    </div>
+    <div class="cssControl">
+        <span>12我们可以为一组特定的浏览器和平台提供字体支持来解决这个问题，其余的可以使用系统字体。</span>
+        <span>2我们可以为一组特定的浏览器和平台提供字体支持来解决这个问题，其余的可以使用系统字体。</span>
+    </div>
+</body>
+<style lang="less">
+    .container {
+        width: 500px;
+        height: 40px;
+        border: solid red 1px;
+    }
+
+    .cssControl {
+        position: relative;
+        width: 500px;
+        height: 40px;
+        border: solid rgb(200, 255, 0) 1px;
+        overflow:hidden;
+        white-space: nowrap;
+    }
+
+    
+    .cssControl span{
+        position: absolute;
+        left: 0;
+        width: auto;
+        display: inline-block;
+        animation: marquee 10s linear infinite;
+        transform: translate(100%,0);
+    }
+    .cssControl span:nth-child(2){
+        animation-delay: 5s;
+    }
+    .cssControl:hover span{
+        animation-play-state: paused;
+    }
+    @keyframes marquee {
+        0% { transform: translate(100%,0); }
+        100% { transform: translate(-100%, 0); }
+    }
+
+</style>
+<script>
+
+</script>
+</html>
