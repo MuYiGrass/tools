@@ -1,0 +1,87 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet/less" type="text/css" href="styles.less" />
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/less.js/3.11.1/less.min.js" ></script>
+</head>
+<style>
+    .mask-img{
+        position: relative;
+        width: 25vw;
+        height: 50vh;
+        background: url(../assets/mask.png) no-repeat;
+        mask: linear-gradient(90deg, transparent, #fff);
+        -webkit-mask: linear-gradient(90deg, transparent, #fff);
+    }
+    .notching{
+        width: 200px;
+        height: 120px;
+        background:
+            linear-gradient(135deg, transparent 15px, deeppink 0)
+            top left,
+            linear-gradient(-135deg, transparent 15px, deeppink 0)
+            top right,
+            linear-gradient(-45deg, transparent 15px, deeppink 0)
+            bottom right,
+            linear-gradient(45deg, transparent 15px, deeppink 0)
+            bottom left;
+        background-size: 50% 50%;
+        background-repeat: no-repeat;
+    }
+    .splicing-img{
+        width: 25vw;
+        height: 50vh;
+        position: relative;
+        background: url(../assets/mask.png) no-repeat;
+    }
+    .splicing-img::before {
+        position: absolute;
+        content: "";
+        top: 0;left: 0; right: 0;bottom: 0;
+        background: url(../assets/mask1.png);
+        mask: linear-gradient(45deg, #000 50%, transparent 50%);
+        -webkit-mask: linear-gradient(45deg, #000 50%, transparent 50%);
+        background-size: cover;
+        z-index: 1;
+    }
+    splicing-img-moving {
+        margin: auto;
+        position: relative;
+        width: 30vw;
+        height: 70vh;
+        background: url(../assets/mask.png);
+        background-size: cover;
+        
+        &::before {
+            position: absolute;
+            content: "";
+            top: 0;left: 0; right: 0;bottom: 0;
+            background: url(../assets/mask1.png);
+            background-size: cover;
+            z-index: 1;
+            animation: maskRotate 4s ease-in-out infinite;
+        }
+    }
+
+    @keyframes maskRotate {
+        @for $i from 0 through 50 { 
+            #{$i}% {
+                mask: linear-gradient(45deg, #000 #{$i * 2 + '%'}, transparent #{$i * 2.5 + '%'}, transparent #{$i * 2.5 + '%'});
+            }
+        }
+        100% {
+            mask: linear-gradient(45deg, #000， #000 100%);
+        }
+    }
+
+
+</style>
+<body>
+    <div class="mask-img"></div>
+    <div class="notching"></div>
+    <div class="splicing-img"></div>
+    <div class="splicing-img-moving"></div>
+</body>
+</html>
