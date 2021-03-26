@@ -1,0 +1,149 @@
+<html>
+<head>
+<script src=" https://s.thsi.cn/js/ta.min.20110902.js" type="text/javascript"></script>
+<script src="https://s.thsi.cn/sns/js/url-polyfill-1.1.12/url-polyfill.min.js"></script>
+</head><script type="text/javascript">
+var adurl = "http://www.10jqka.com.cn/";
+function imgonload() {
+    window.location.href = adurl;
+}
+</script>
+<body>
+<img id="__taimg__" onerror="javascript:imgonload();" onload="javascript:imgonload();" style="visibility:hidden"/>
+<script type="text/javascript">
+    alert(12312312111111)
+    function IEVersion() {
+        var userAgent = navigator.userAgent; //取得浏览器的userAgent字符串  
+        var isIE = userAgent.indexOf("compatible") > -1 && userAgent.indexOf("MSIE") > -1; //判断是否IE<11浏览器  
+        var isEdge = userAgent.indexOf("Edge") > -1 && !isIE; //判断是否IE的Edge浏览器  
+        var isIE11 = userAgent.indexOf('Trident') > -1 && userAgent.indexOf("rv:11.0") > -1;
+        if(isIE) {
+            var reIE = new RegExp("MSIE (\\d+\\.\\d+);");
+            reIE.test(userAgent);
+            var fIEVersion = parseFloat(RegExp["$1"]);
+            if(fIEVersion == 7) {
+                return 7;
+            } else if(fIEVersion == 8) {
+                return 8;
+            } else if(fIEVersion == 9) {
+                return 9;
+            } else if(fIEVersion == 10) {
+                return 10;
+            } else {
+                return 6;//IE版本<=7
+            }   
+        } else if(isEdge) {
+            return 'edge';//edge
+        } else if(isIE11) {
+            return 11; //IE11  
+        }else{
+            return -1;//不是ie浏览器
+        }
+}
+
+var formatUrlReg = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+
+var url = this.location.search;
+var adurlarr = new Array();
+var adnum = new Array();
+var temp = new Array();
+if (url) {
+    var adandurl = url.substring(1);
+    if (adandurl) {
+        adurlarr = adandurl.split("&");
+        for (var i=0;i<adurlarr.length;i++) {
+            adnum = adurlarr[i].split("=");
+            temp[adnum[0]] = decodeURIComponent(adnum[1]);
+        }
+        var adid = temp['ad']; 
+        var adurl = temp['url'];
+
+        // 浠ttp鎴杊ttps寮€澶�
+        if(adurl && adurl.indexOf('http') >-1){
+            var newURL = ''
+            if(IEVersion() ==false){
+                newURL = new URL(adurl) ? new URL(adurl).hostname : ''
+            } else{
+                newURL = formatUrlReg.exec(adurl)[2]
+            }
+            
+            // 鏍瑰煙鍚嶄笉鍖呭惈hexin.com.cn;news.300033.info;10jqka.com.cn;a.myapp.com;a.app.qq.com
+            if(!/\S*(hexin\.com\.cn|news\.300033\.info|10jqka\.com\.cn|a\.myapp\.com|a\.app\.qq\.com)$/.test(newURL)){
+                adurl = "http://www.10jqka.com.cn"
+            }
+        }else{
+            adurl = "http://www.10jqka.com.cn"
+        }
+
+        if (temp['fid']) {
+            TA.log({id:adid, fid: temp['fid'], _sid:"__taimg__"});
+        } else {
+            TA.log({id:adid, _sid:"__taimg__"});
+        }
+    } else {
+        window.location.href="http://www.10jqka.com.cn";
+    }
+} else {
+    window.location.href="http://www.10jqka.com.cn";
+}
+
+
+
+// 版本一
+const getTdList = (el: Element) => Array.from(el.querySelectorAll("td"));
+const find = (root: HTMLElement, tdList = getTdList(root)): any => {
+    const result = tdList.map((td) => {
+        const childTd = getTdList(td);
+
+        if (childTd.length) {
+            return find(td, childTd);
+        } else {
+            return td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`);
+        }
+    });
+
+    console.log(result);
+
+    return result.flat(Infinity).filter((s) => s);
+};
+
+const joinTd = (id: string) => [...new Set(find(document.getElementById(id)!))] .join("\n");
+// 版本二
+const getTdList = (el: Element) => Array.from(el.querySelectorAll("td"));
+const is = (list: HTMLElement[], td: HTMLElement) => list.some((i) => td !== i && i.contains(td));
+
+const find = (root: HTMLElement, tdList = getTdList(root)): any => {
+    const result = tdList.map((td) => {
+        const childTd = getTdList(td);
+
+        if (is(tdList, td)) return "";
+
+        if (childTd.length) {
+            return find(td, childTd);
+        } else {
+            return td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`);
+        }
+    });
+
+    return result.flat(Infinity).filter((s) => s);
+};
+
+const joinTd = (id: string) => find(document.getElementById(id)!).join("\n");
+
+// 版本三
+const getTdList = (el: Element) => Array.from(el.querySelectorAll("td"));
+const is = (list: HTMLElement[], td: HTMLElement) => list.some((i) => td !== i && i.contains(td));
+
+const find = (root: HTMLElement, tdList = getTdList(root)): any => {
+    const result = tdList.map((td) => {
+        const childTd = getTdList(td);
+        if (is(tdList, td)) return "";
+        return childTd.length ? find(td, childTd) : td.innerText
+    });
+
+    return result.flat(Infinity).filter((s) => s);
+};
+
+const joinTd = (id: string) => find(document.getElementById(id)!).map((s)=>{s.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`);}).join("\n");
+
+</script>
