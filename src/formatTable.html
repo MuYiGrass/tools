@@ -1,0 +1,145 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    .table-container table{
+        font-size: 18px;
+        border: solid black 5px;
+    }
+    .table-container table td{
+        border: solid red 2px;
+    }
+</style>
+<body>
+    <div class="table-container">
+
+        <table>
+            <tr>
+                <td>
+                    <p>单元格1-1</p>
+                    <p>单元格1-1-2</p>
+                </td>
+                <td>
+                    <p>单元格1-2</p>
+                </td>
+                <td>
+                    <p>单元格1-3</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p>单元格3-1</p>
+                    <p>单元格3-2</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table>
+                        <tr>
+                            <td>子段落1-1</td>
+                            <td>
+                                <p>
+                                    子段落1-2-1
+                                </p>
+                                <p>
+                                    子段落1-2-2
+                                </p>
+                            </td>
+                        </tr>
+                        <!-- 相同节点内容，需要都提取内容 -->
+                        <tr>
+                            <td>子段落2-1</td>
+                            <td>子段落2-2</td>
+                        </tr>
+                        <tr>
+                            <td>子段落2-1</td>
+                            <td>子段落2-2</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="replace-result">
+    </div>
+</body>
+<script>  
+    // 版本一
+    // const getTdList = (ele)=> Array.from(ele.querySelectorAll('td'))
+    // const find = (root, tdList=getTdList(root))=>{
+    //     const result = tdList.map((td)=>{
+    //         const childTd = getTdList(td)
+    //         if(childTd.length){
+    //             return find(td,childTd)
+    //         }else{
+    //             return td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>`)
+    //         }
+    //         console.log('result',result)
+    //     })
+    //     return result.flat(Infinity).filter(s=>s)
+    // }
+    // const joinTd = (id)=>[...new Set(find(document.querySelector(id)))].join('\n')
+
+    // document.querySelector('.replace-result').innerHTML = joinTd('.table-container')
+    // 版本二
+    // const getTdList = (el) => Array.from(el.querySelectorAll("td"));
+    // const is = (list, td) => list.some((i) => td !== i && i.contains(td));
+    // const find = (root, tdList = getTdList(root)) => {
+    //     const result = tdList.map((td) => {
+    //         const childTd = getTdList(td);
+    //         if (is(tdList, td)) return "";
+    //         if (childTd.length) {
+    //             return find(td, childTd);
+    //         } else {
+    //             return td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`);
+    //         }
+    //     })
+    //     return result.flat(Infinity).filter((s) => s);
+    // };
+    // const joinTd = (id) => find(document.querySelector(id)).join("\n");
+    // document.querySelector('.replace-result').innerHTML = joinTd('.table-container')
+    // 版本三
+    const getTdList = (el) => Array.from(el.querySelectorAll("td"));
+    const is = (list, td) => list.some((i) => td !== i && i.contains(td));
+
+    const find = (root, tdList = getTdList(root)) => {
+        const result = tdList.map((td) => {
+            const childTd = getTdList(td);
+            if (is(tdList, td)) return "";
+            return childTd.length? find(td, childTd):td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`);
+        })
+        return result.flat(Infinity).filter((s) => s);
+        // return tdList.map((td) => {
+        //     const childTd = getTdList(td);
+        //     if (is(tdList, td)) return "";
+        //     return childTd.length? find(td, childTd):td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`).flat(Infinity).filter((s) => s);
+        // })
+    };
+    const joinTd = (id) => find(document.querySelector(id)).join("\n");
+    document.querySelector('.replace-result').innerHTML = joinTd('.table-container')
+// 
+const getTdList = (el) => Array.from(el.querySelectorAll("td"));
+    const is = (list, td) => list.some((i) => td !== i && i.contains(td));
+
+    const find = (root, tdList = getTdList(root)) => {
+        const result = tdList.map((td) => {
+            const childTd = getTdList(td);
+            if (is(tdList, td)) return "";
+            return childTd.length? find(td, childTd):td.innerText
+        })
+        return result.flat(Infinity).filter((s) => s);
+        // return tdList.map((td) => {
+        //     const childTd = getTdList(td);
+        //     if (is(tdList, td)) return "";
+        //     return childTd.length? find(td, childTd):td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`).flat(Infinity).filter((s) => s);
+        // })
+    };
+    const joinTd = (id) => find(document.querySelector(id))
+    .map((s)=>s.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`))
+    .join("\n");
+    document.querySelector('.replace-result').innerHTML = joinTd('.table-container')
+</script>
+</html>
