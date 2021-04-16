@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style>
+			#mc {
+				background: black;
+				display: block;
+				margin: 0 auto;
+			}
+		</style>
+	</head>
+
+	<body>
+		<canvas id="mc" width="800" height="800"></canvas>
+	</body>
+	<script>
+		var mc = document.getElementById('mc'); //获取元素
+		var ctx = mc.getContext('2d'); //画笔
+
+		//全局变量
+		//基于canvas画布的x\y坐标初始值（绘制白色快及子弹）
+		var mainX = mc.width / 2 - 20;
+
+		var mainY = mc.height - 80;
+
+		var mainSpeed = 5
+
+
+
+		//子弹数组
+		var bulletArr = [];
+		//掉落快数组
+		var enemyArr = [];
+		//爆炸物数组
+		var boomArr = [];
+		//技能数组
+		var coolingAttr = [];
+		//范围伤害数组
+		var explosionArr = [];
+		//技能控制对象
+		var coolingFlagObj = {
+			q:true,
+			w:false,
+			e:false,
+			r:false
+		}
+		var pressFlagObj = {
+			q:false,
+			w:false,
+			e:false,
+			r:false,
+			up:false,
+			down:false,
+			left:false,
+			right:false,
+			space:false,
+		}
+		//分数初始值
+		var score = 0;
+		//没被击中，且移出画布的掉落块的数量
+		var dieNum = 0;
+		//绘制频率计时器
+		var eleMoveTimer;
+		//掉落快计时器
+		var createEnemyTimer;
+		//子弹形态数组
+		var hurdles = 0;
+		var bulletTypeArr = {
+			"q":{
+				name:'q', //子弹type
+				cooling:10, //冷却时间 /10ms
+				position:{ //冷却时间位置 
+					x:40, 
+					y:200
+				},
+				width:8, //子弹宽度
+				height:10, //子弹高度
+				speed:10, //子弹速度
+				damage:1, //子弹伤害
+				fillStyle:'#fdcb00', //子弹颜色
+				splice:true, //碰撞后是否移除
+				level:1, //技能等级
+				cost:10, //升级花费
+				costRaise:1, //升级后花费提升
+			},
+			"w":{
+				name:'w',
+				cooling:60,
+				position:{
+					x:40,
+					y:300
+				},
+				width:150,
+				height:20,
+				speed:15,
+				fillStyle:'#d56d1d',
+				splice:true,
+				damage:2, //子弹伤害
+				level:0, //技能等级
+				cost:20, //升级花费
+				costRaise:10, //升级后花费提升
+			},
+			"e":{
+				name:'e',
+				cooling:500,
+				position:{
+					x:40,
+					y:400
+				},
+				width:100,
+				height:250,
+				speed:2,
+				fillStyle:'#9b1616',
+				splice:true,
+				damage:0, //子弹伤害
+				explosion:{ //范围伤害
+					color:'rgba(155,22,22,.3)', //范围伤害颜色
+					hurt:3, //范围伤害值
+					range:300, //范围伤害最大扩散范围
+					speed:5 //范围伤害扩散速度
+				},
+				level:0, //技能等级
+				cost:50, //升级花费
+				costRaise:50, //升级后花费提升
+			},
+			"r":{
+				name:'r',
+				cooling:1000,
+				position:{
+					x:40,
+					y:500
+				},
+				width:300,
+				height:50,
+				speed:5,
+				fillStyle:'#ebff00',
+				splice:false,
+				damage:10, //子弹伤害
+				level:0, //技能等级
+				cost:100, //升级花费
+				costRaise:100, //升级后花费提升
+			}
+		}
+
+		//随机数
+		function sui(x, y) {
+			return Math.round(Math.random() * (y - x) + x)
+		}
+		//游戏开始页面
+		function drawStartPage() {
+			ctx.beginPath();
+			ctx.font = '60px Arial';
+			ctx.fillStyle = 'white';
+			ctx.fillText('暴力打飞机', 250, 300); //canvas 前一个是内容，后两个是起点
+			ctx.fillText('之看看你能玩到第几关', 100, 370);
+			ctx.fillText('之只要升级就能变强', 150, 440);
+			ctx.fillText('之俞泽锋大冒险', 200, 510);
+
+			ctx.beginPath();
+			ctx.font = '30px Arial';
+			ctx.fillStyle = '#F5F5F5';
+			ctx.fillText('点击游戏页面任何位置开始游戏', 180, 600); //canvas 前一个是内容，后两个是起点
+
+		}
+		drawStartPage();
+		//绘制白块
+		function drawBox() {
+			//判断盒子x轴的最大值，不让盒子从画布里出去
+			if(mainX > mc.width - 20) {
+				mainX = mc.width - 20;
+			}
+			//判断盒子x轴的最小值，不让盒子从画布里出去（只能用if语句，不能用三目运算符）
+			if(mainX < 20) {
+				mainX = 20;
+			}
+			if(mainY > mc.height - 80) {
+				mainY = mc.height - 80;
+			}
+			//判断盒子x轴的最小值，不让盒子从画布里出去（只能用if语句，不能用三目运算符）
+			if(mainY < 40) {
+				mainY = 40;
+			}
+			//绘制白块
+			ctx.beginPath();
+			ctx.fillStyle = '#fff';
+			ctx.fillRect(mainX - 20, mainY - 20, 40, 40);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.font="40px Arial";
+			ctx.fillStyle = "red"
+			ctx.fillText(`生命值`, mc.width/2 - 200, mc.height - 20);
+			ctx.closePath();
+			let live = 10 - dieNum
+			for(let i = live;i>0;i--){
+				ctx.beginPath();
+				ctx.fillStyle = 'red';
+				ctx.arc(mc.width/2 + i*20 - 80,mc.height - 35,8,0,2*Math.PI,false);
+				ctx.fill();
+			}
+		}
+
+		//封装子弹类
+		function Bullet(type) {
+			this.x = mainX - bulletTypeArr[type].width*0.5; //子弹x的坐标
+			this.y = mainY;
+			this.type = bulletTypeArr[type].name
+			this.speed = bulletTypeArr[type].speed; //子弹匀速移动速度
+			this.width = bulletTypeArr[type].width; //子弹宽度
+			this.height = bulletTypeArr[type].height; //子弹高度
+			this.fillStyle = bulletTypeArr[type].fillStyle; //子弹颜色
+			this.splice = bulletTypeArr[type].splice; //子弹颜色
+			this.over = false //判断子弹是否超出屏幕
+		}
+		//绘制子弹方法
+		Bullet.prototype.move = function() {
+			let newY = this.y - this.speed
+			this.y = newY
+			ctx.beginPath(); //开始一条新路径
+			ctx.fillStyle = this.fillStyle;
+			ctx.fillRect(this.x-(0.5 * this.width), this.y, this.width, this.height);
+			ctx.fill();
+
+			//当子弹移出画布的时候，从数组中是移除，减少不必要的循环
+			if(this.y < -this.height) {
+				this.over = true
+			}
+			bulletArr = bulletArr.filter((item)=>{
+				return !item.over
+			})
+		}
+
+		//创建一个子弹
+		function createBullet(type) {
+			var bullet = new Bullet(type); //实例化子弹
+			bulletArr.push(bullet); //塞进子弹数组
+		}
+
+		//封装范围伤害类
+		function Explosion(bullet) {
+			this.x = bullet.x + 0.5*bullet.width //x坐标
+			this.y = bullet.y //y坐标
+			this.color = bulletTypeArr[bullet.type].explosion.color //爆炸颜色
+			this.hurt = bulletTypeArr[bullet.type].explosion.hurt //爆炸伤害
+			this.maxRange = bulletTypeArr[bullet.type].explosion.range //最大范围
+			this.speed = bulletTypeArr[bullet.type].explosion.speed //爆炸扩散速度
+			this.range = 0.5*bullet.width - this.speed //当前范围 初始范围为子弹宽度
+			this.over = false //是否移除
+			let random = Math.floor(Math.random()*1000)
+			this.random = random //爆炸码
+		}
+		//绘制范围伤害
+		Explosion.prototype.move = function () {
+			let newRange = this.range + this.speed
+			this.range = newRange
+			ctx.beginPath(); //开始一条新路径
+			ctx.fillStyle = this.color;
+			ctx.arc(this.x,this.y, this.range,0,2*Math.PI,false);
+			ctx.fill();
+			if(this.range > this.maxRange || this.range > this.maxRange){
+				this.over = true
+			}
+			explosionArr = explosionArr.filter((item)=>{
+				return !item.over
+			})
+		}
+		//创建范围伤害
+		function createExplosion(bullet) {
+			var explosion = new Explosion(bullet); //实例化范围伤害
+			explosionArr.push(explosion); //塞进范围伤害数组
+		}
+
+		//封装冷却时间
+		function Cooling(type) {
+			this.x = bulletTypeArr[type].position.x //绘制位置X
+			this.y = bulletTypeArr[type].position.y //绘制位置Y
+			this.defaultCooling = bulletTypeArr[type].cooling //冷却时间
+			this.cooling = this.defaultCooling //剩余冷却时间
+			this.name = bulletTypeArr[type].name //绘制文字
+			this.level = bulletTypeArr[type].level // 等级
+			this.cost = bulletTypeArr[type].cost //花费
+			this.type = type
+		}
+
+		//绘制冷却时间
+		Cooling.prototype.move = function () {
+			this.level = bulletTypeArr[this.type].level
+			this.cost = bulletTypeArr[this.type].cost
+			var startAngle = this.cooling / this.defaultCooling * 2 * Math.PI + 1.5*Math.PI
+			ctx.beginPath();
+			ctx.moveTo(this.x,this.y);
+			ctx.arc(this.x,this.y, 25,0,2*Math.PI,false);
+			ctx.fillStyle = 'rgb(255,255,255)'
+			ctx.fill();
+			ctx.closePath();
+			if(!coolingFlagObj[this.name]){
+				this.cooling -= 1
+				if(this.cooling < 0){
+					coolingFlagObj[this.name] = true
+					this.cooling = this.defaultCooling
+				}
+				ctx.beginPath();
+				ctx.moveTo(this.x,this.y);
+				ctx.arc(this.x,this.y, 25, startAngle, 1.5*Math.PI, false);
+				ctx.fillStyle = 'rgba(0,0,0,0.3)'
+				ctx.fill();
+				ctx.closePath();
+			}
+			ctx.beginPath();
+			ctx.font="40px Arial";
+			ctx.fillStyle = "black"
+			ctx.fillText(this.name,this.x-10,this.y+10);
+			ctx.closePath();
+			ctx.beginPath();
+			ctx.font="20px Arial";
+			ctx.fillStyle = "yellow"
+			ctx.fillText(`lv.${this.level}`,this.x+27,this.y);
+			ctx.closePath();
+			ctx.font="20px Arial";
+			ctx.fillStyle = "red"
+			ctx.fillText(`￥${this.cost}↑`,this.x+27,this.y+25);
+			ctx.closePath();
+		}
+		
+		function creatCooling() {
+			let coolattr = ["q","w","e","r"]
+			for(i in coolattr){
+				var cooling = new Cooling(coolattr[i])
+				coolingAttr.push(cooling)
+			}
+			
+		}
+
+		/*
+		 * Enemy()类：掉落块的类
+		 * x,y 是坐标
+		 * wh:是宽高
+		 * vx,vy:水平方向和竖直方向移动的速度
+		 * bc:背景色
+		 * dis：左右摇摆的范围
+		 */
+		//创建
+
+		function Enemy(x, wh, vx, vy, bc, dis, health) {
+			this.x = x;
+			this.y = -wh;
+			this.wh = wh;
+			this.bc = bc;
+			this.vx = vx;
+			this.vy = vy;
+			this.maxHealth = health
+			this.health = health
+			this.left = this.x - dis; //摆动的左边边界
+			this.right = this.x + dis; //摆动右边的边界
+			this.exploded = [] //被范围伤害击中falg
+		}
+		Enemy.prototype.move = function() {
+			//当块左右摆动到达边界之后，反弹
+			if(this.x < this.left || this.x + this.wh > this.right || this.x < 20 ||this.x + this.wh > mc.width - 20) {
+				this.vx *= -1
+			}
+			//位置变化
+			this.x += this.vx;
+			this.y += this.vy;
+
+			//绘制方块
+			ctx.beginPath();
+			ctx.fillStyle = this.bc;
+			ctx.fillRect(this.x, this.y, this.wh, this.wh*this.health/this.maxHealth);
+			ctx.fill();
+		}
+
+		//封装创建一个方块函数(实例化enemy)
+		var minWh = 50,
+			maxWh = 75; //敌方飞机的宽高范围
+		var MinX = 0,
+			maxX = mc.width - maxWh; //x坐标范围
+		var minVx = -2,
+			maxVx = 3; //x方向速度范围
+		var minVy = 1,
+			maxVy = 3; //y方向速度范围
+		var minDis = 0,
+			maxDis = 100; //摆动范围
+
+		function createEmeny() {
+			var x = sui(MinX, maxX); //地方位置
+			var wh = sui(minWh, maxWh); //宽高
+			var vx = sui(minVx, maxVx); //x方向速度范围
+			var vy = sui(minVy, maxVy); //
+			var dis = sui(minDis, maxDis); //摆动范围
+			var bc = 'rgb(' + sui(30, 255) + ',' + sui(30, 255) + ',' + sui(30, 255) + ')'; //颜色
+			var health = parseInt(wh/50) //生命值
+			var enemy = new Enemy(x, wh, vx, vy, bc, dis, health); //实例化一个敌方飞机
+			enemyArr.push(enemy); //每实例化一个飞机就push进数组里
+
+		}
+
+		//判断小块是否移出画布，如果移出则从enemy数组中删除
+		function judegeEnemy() {
+
+			for(var i = 0; i < enemyArr.length; i++) {
+				if(enemyArr[i].y > mc.height) {
+					enemyArr.splice(i, 1);
+					i--; //移除因素之后数组结构否发生变化，为了防止漏判，要让i-1;
+				}
+			}
+		}
+
+		//封装一个爆炸物类
+		function Boom(x, y, vx, vy, bc) {
+			this.x = x; //x坐标
+			this.y = y; //y坐标
+			this.vx = vx; //x速度
+			this.vy = vy; //y速度
+			this.bc = bc; //背景色
+			this.times = 0; //爆炸物的绘制次数（move函数每调用一次，time加+）
+		}
+		//为爆炸物添加原型方法
+		Boom.prototype.move = function() {
+			this.x += this.vx;
+			this.y += this.vy;
+
+			ctx.beginPath();
+			ctx.fillStyle = this.bc;
+			ctx.fillRect(this.x, this.y, 8*(50 - this.times)/50, 8*(50 - this.times)/50);
+			ctx.fill();
+			this.times++;
+
+		}
+
+		//判断是否击中函数（碰撞检测）
+		function judgeHit() {
+			for(var i = 0; i < bulletArr.length; i++) {
+
+				for(var j = 0; j < enemyArr.length; j++) {
+					var a = bulletArr[i]; //当前子弹
+					var b = enemyArr[j]; //当前掉落块
+					if(a.x+(0.5 * a.width) > b.x && a.y+a.height > b.y && a.x-(0.5 * a.width) < b.x + b.wh && a.y < b.y + b.wh) {
+						//创建爆炸物，调用碰撞函数。根据被击中块的信息来创建
+						//两两碰撞eq
+						if(bulletTypeArr[a.type].explosion){
+							createExplosion(a)
+							if(a.splice){
+								bulletArr.splice(i, 1); //子弹移出
+							}
+						}else{
+							if(a.splice){
+								bulletArr.splice(i, 1); //子弹移出
+							}
+							b.health--
+							if(b.health == 0 || b.health < 0){
+								createBoom(b.x, b.y, b.wh, b.bc);
+								enemyArr.splice(j, 1); //掉落物移出
+								score+= b.maxHealth;
+								i--;
+								break;
+								//当碰撞上后，两个块都已消失，删除之后，不用多做比较，直接跳出内层循环，让外层循环进行下一次碰撞检测
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		//范围伤害击中函数
+		function judgeExplosion() {
+			for(let j = 0; j < enemyArr.length; j++) {
+				for(let k = 0; k < explosionArr.length; k++) {
+					var b = enemyArr[j]; //当前掉落块
+					var c = explosionArr[k] //当前范围伤害
+					b.cx = b.x + 0.5*b.wh
+					b.cy = b.y + 0.5*b.wh
+					b.range = Math.sqrt(Math.pow((b.cx - c.x),2)+Math.pow((b.cy - c.y),2)) //当前落块和范围伤害中心的距离
+					//a 和 b的碰撞检测
+					if((b.range < c.range || b.range == c.range) && !b.exploded.includes(c.random)){
+						let newHealth = b.health - c.hurt
+						b.exploded.push(c.random)
+						b.health = newHealth
+						if(b.health == 0 || b.health < 0){
+							createBoom(b.x, b.y, b.wh, b.bc);
+							enemyArr.splice(j, 1); //掉落物移出
+							score+= b.maxHealth;
+							break;
+							//当碰撞上后，两个块都已消失，删除之后，不用多做比较，直接跳出内层循环，让外层循环进行下一次碰撞检测
+						}
+					}
+				}
+			}
+		}
+
+		//判断被击中扣血函数
+		function judgeInjured() {
+			for(var j = 0; j < enemyArr.length; j++) {
+				var b = enemyArr[j]; //当前掉落块
+				if(mainX + 20 > b.x && mainX - 20 > b.y && mainX - 20 < b.x + b.wh && mainY + 20 < b.y + b.wh) {
+					//创建爆炸物，调用碰撞函数。根据被击中块的信息来创建
+					//两两碰撞eq
+					dieNum++
+					b.health = 0
+					if(b.health == 0 || b.health < 0){
+						createBoom(b.x, b.y, b.wh, b.bc);
+						enemyArr.splice(j, 1); //掉落物移出
+						score+= b.maxHealth;
+						i--;
+						break;
+						//当碰撞上后，两个块都已消失，删除之后，不用多做比较，直接跳出内层循环，让外层循环进行下一次碰撞检测
+					}
+				}
+			}
+		}
+		//产生爆炸物函数
+		function createBoom(x, y, wh, bc) {
+			//当前块产生的爆炸物数组
+			var nowArr = [];
+			//实例化BOOM
+			var num = Math.floor(wh / 8); //宽和高可以生成的的小块
+			if (num > 15){num = 15}
+			//双层循环实例化类(外层控制行（竖），内层控制列（横）)
+			for(var i = 0; i < num; i++) {
+				//计算每行的y坐标
+				var thisY = y + 8 * i;
+				for(var j = 0; j < num; j++) {
+					var thisX = x + 8 * j; //计算行的x坐标
+
+					//速度
+					var vx = sui(-2, 2);
+					var vy = sui(-2, 3);
+					if(vx == 0 && vy == 0) {
+						vx += -1;
+						vy = 2
+					}
+					//实例化爆炸物
+					var boom = new Boom(thisX, thisY, vx, vy, bc);
+					nowArr.push(boom); //将爆炸物push进爆炸物数组
+
+				}
+			}
+			boomArr.push(nowArr); //将每个爆炸物的数组塞进整体爆炸物的数组
+		}
+
+		//判断爆炸物
+		function judgeBoom() {
+			for(var i = 0; i < boomArr.length; i++) {
+				for(var j = 0; j < boomArr.length; j++) {
+					//判断一批爆炸物中移动最慢的是否从画布移出
+					var maxTimes = 60;
+					if(boomArr[i][j].times > maxTimes) {
+						boomArr.splice(i, 1); //让整个爆炸物数组移出
+						i--; //让外层循环减一，重新循环
+						break; //跳出循环 
+					}
+				}
+			}
+		}
+		document.onkeydown = (event)=>{
+			var e = event || window.event || arguments.callee.caller.arguments[0];
+			console.log(e.keyCode);
+			if (e){
+				switch (e.keyCode) {
+					case 81:
+						pressFlagObj['q'] = true
+						break;
+					case 87:
+						pressFlagObj['w'] = true
+						break;
+					case 69:
+						pressFlagObj['e'] = true
+						break;
+					case 82:
+						pressFlagObj['r'] = true
+						break;
+					case 32:
+						pressFlagObj['space'] = true
+						break;
+					case 37:
+						pressFlagObj['left'] = true
+						break;
+					case 38:
+						pressFlagObj['up'] = true
+						break;
+					case 39:
+						pressFlagObj['right'] = true
+						break;
+					case 40:
+						pressFlagObj['down'] = true
+						break;
+					default:
+						break;
+				}
+			}
+		}
+		document.onkeyup = (event)=>{
+			var e = event || window.event || arguments.callee.caller.arguments[0];
+			if (e){
+				switch (e.keyCode) {
+					case 81:
+						pressFlagObj['q'] = false
+						break;
+					case 87:
+						pressFlagObj['w'] = false
+						break;
+					case 69:
+						pressFlagObj['e'] = false
+						break;
+					case 82:
+						pressFlagObj['r'] = false
+						break;			
+					case 32:
+						pressFlagObj['space'] = false
+						break;	
+					case 37:
+						pressFlagObj['left'] = false
+						break;
+					case 38:
+						pressFlagObj['up'] = false
+						break;
+					case 39:
+						pressFlagObj['right'] = false
+						break;
+					case 40:
+						pressFlagObj['down'] = false
+						break;
+					default:
+						break;
+				}
+			}
+		}
+		//监听按键处理
+		function pressing() {
+			let attr = ['q','w','e','r']
+			let moveAttr = ['up','down','left','right']
+			attr.forEach((item)=>{
+				if(coolingFlagObj[item] && pressFlagObj[item] && bulletTypeArr[item].level > 0){
+					coolingFlagObj[item]=false
+					createBullet(item); //调用创建子弹函数
+				}
+				if(pressFlagObj['space']&&pressFlagObj[item]){
+					levelUp(item) //技能升级函数
+				}
+			})
+			if(pressFlagObj['up']){
+				mainY-=mainSpeed
+			}
+			if(pressFlagObj['down']){
+				mainY+=mainSpeed
+			}
+			if(pressFlagObj['left']){
+				mainX-=mainSpeed
+			}
+			if(pressFlagObj['right']){
+				mainX+=mainSpeed
+			}
+
+		}
+		
+		//技能升级函数
+		function levelUp(item) {
+			if(score > bulletTypeArr[item].cost){
+				bulletTypeArr[item].level++
+				score -= bulletTypeArr[item].cost
+				bulletTypeArr[item].cost += bulletTypeArr[item].costRaise
+				switch(item) {//升级规则
+					case 'q':
+						bulletTypeArr[item].damage = 0.9 + 0.1*bulletTypeArr[item].level
+						break;
+					case 'w':
+						bulletTypeArr[item].damage = 1.9 + 0.1*bulletTypeArr[item].level
+						bulletTypeArr[item].cooling = 62 - 2*bulletTypeArr[item].level
+						break;
+					case 'e':
+						if(bulletTypeArr[item].cooling > 300){
+							bulletTypeArr[item].cooling = 600 - 100*bulletTypeArr[item].level
+						}else{
+							bulletTypeArr[item].explosion.hurt = 2 + 1*(bulletTypeArr[item].level - 2)
+							bulletTypeArr[item].explosion.range = 200 + 100*(bulletTypeArr[item].level - 2)
+						}
+						break;
+					case 'r':
+						bulletTypeArr[item].width = 100 + 200*bulletTypeArr[item].level
+						bulletTypeArr[item].cooling = 1000 - 100*bulletTypeArr[item].level
+						break;
+					default:break;
+				}
+				toast('升级成功',3000)
+			}
+		}
+
+		function toast(text,extTime) {
+			let showText = setInterval(()=>{
+					ctx.beginPath();
+					ctx.font="100px Arial";
+					ctx.fillStyle = "red"
+					ctx.fillText(text,mc.width / 2 - 200,100);
+					ctx.closePath();
+				},10)
+			let textTimer = setTimeout(()=>{
+				clearInterval(showText)
+				clearTimeout(textTimer)
+			},extTime)
+		}
+
+		//绘制分数、关数
+		function drawScore() {
+			ctx.beginPath();
+			ctx.font = '20px Arial';
+			ctx.fillStyle = 'burlywood';
+			ctx.fillText('￥：' + score, 20, 20);
+			ctx.closePath();
+			ctx.beginPath();
+			ctx.font = '40px Arial';
+			ctx.fillStyle = 'burlywood';
+			ctx.fillText(`第${hurdles}关`, 180, 40);
+		}
+		
+		function kaishi(){
+		//游戏开关
+		var gameFlag = true;
+		//为canvas绑定点击事件
+		mc.onclick = function() {
+			//设置开关，第一次点击画布，开始游戏，之后再点击画布，创建子弹。
+			if(gameFlag) {
+				//为canvas添加鼠标移动事件
+				mc.onmousemove = function() {				
+					//计算出鼠标距离canvas的坐标
+					var e = event || window.event;
+					// mainX = e.clientX - mc.offsetLeft; //获取鼠标在底部坐标，并设置在中间
+					drawBox(); //鼠标移动创建白色块
+				}
+				creatCooling();
+				gameStart();
+				gameFlag = false;
+				drawScore();
+				// document.onkeydown = addKeyListener(event)
+			} else {
+				// createBullet(); //调用创建子弹函数
+			}
+			
+
+		}
+		}kaishi();
+
+		//封装计时器函数
+		function gameStart() {
+			//绘制频率
+			eleMoveTimer = setInterval(function() {
+				//擦除画布
+				ctx.clearRect(0, 0, 800, 800);
+				//绘制白块
+				drawBox(); 
+				//循环绘制所有子弹
+				for(var i = 0; i < bulletArr.length; i++) {
+					bulletArr[i].move();
+				}
+
+				//循环绘制掉落物
+				for(var j = 0; j < enemyArr.length; j++) {
+					enemyArr[j].move();
+				}
+
+				//绘制爆炸物	
+				for(var m = 0; m < boomArr.length; m++) {
+					for(var n = 0; n < boomArr[m].length; n++) {
+						boomArr[m][n].move();
+					}
+				}
+
+				//绘制冷却时间
+				for(var o = 0; o < coolingAttr.length; o++) {
+					coolingAttr[o].move();
+				}
+
+				//绘制范围伤害
+				for(var p = 0; p < explosionArr.length; p++) {
+					explosionArr[p].move();
+				}
+				
+				judegeEnemy(); //判读掉落物是否移出画布
+				judgeHit(); //碰撞检测
+				drawScore(); //绘制分数
+				judgeBoom(); //判断爆炸物是否移出页面
+				judgeExplosion(); //范围伤害检测
+				pressing() //按键检测
+				judgeInjured() //扣血检测
+				//检测游戏结束
+				if(dieNum == 10) {
+					gameOver();
+				}
+
+			}, 10);
+			//掉落快计时器
+			let originalTime = 4000
+			let time = originalTime
+			createEnemyTimerTimer = setInterval(()=>{
+				enemyCome()
+				hurdles++
+			},6000)
+			function enemyCome() {
+				if(createEnemyTimer) {clearInterval(createEnemyTimer);} //清除掉落块计时器
+				let random = Math.random()
+				if(random >0.3){
+					time = originalTime * 0.25
+				}else if(random >0.1){
+					maxWh += 50
+					if(maxWh > 500){ maxWh = 500}
+				}else{
+					maxDis += 50
+				}
+				createEnemyTimer = setInterval(function() {
+					createEmeny();
+				}, time);
+			}
+			enemyCome()
+
+		}
+
+		//封装游戏结束函数
+		function gameOver() {
+			//清除游戏运行计时器
+			clearInterval(eleMoveTimer); //清除游戏频率计时器
+			clearInterval(createEnemyTimerTimer); //清除掉落块计时器
+
+			//清除画布的事件
+			mc.onclick = null;
+			mc.onmousemove = null;
+			//绘制最终分数
+			ctx.clearRect(0, 0, 800, 800); //清空画布
+			ctx.beginPath();
+			ctx.font = '50px Arial';
+			ctx.fillStyle = 'burlywood';
+			ctx.fillText('游戏结束', 300, 300);
+			ctx.fill();
+
+			ctx.beginPath();
+			ctx.font = '30px Arial';
+			ctx.fillStyle = 'burlywood';
+			ctx.fillText(`宁闯到了第${hurdles}关，真猛！`, 200, 400);
+			ctx.fill();
+
+			//将分数、关数重置为0
+			score = 0;
+			hurdles = 0;
+			dieNum = 0;
+			time = originalTime;
+			maxWh = 75;
+			//清除按键flag
+			pressFlagObj = {
+				q:false,
+				w:false,
+				e:false,
+				r:false,
+				space:false,
+			}
+			//清空数组
+			//子弹数组
+			bulletArr = [];
+			//掉落快数组
+			enemyArr = [];
+			//爆炸物数组
+			boomArr = [];
+			//点击canvas回到首页
+			mc.onclick = function(){
+				ctx.clearRect(0,0,800,800);
+				drawStartPage();
+				kaishi();
+			}
+		}
+	</script>
+
+</html>
