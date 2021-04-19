@@ -1,0 +1,68 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>验证流程控制</title>
+</head>
+<body>
+    
+</body>
+<script>
+    // 方法1: 直接用await
+    // const process = async(steps)=>{
+    //     for(const step of steps){
+    //         await step()
+    //     }
+    // }
+    // const subProcess = () => process([
+    //     () => Promise.resolve().then(() => console.log('1-1')),
+    //     () => Promise.reject()
+    // ]);
+    // let processStep = [
+    //     ()=>Promise.resolve().then(()=>{console.log(1)}),
+    //     ()=>Promise.reject(2).catch((err)=>{console.log(err)}),
+    //     // ()=>Promise.reject(3),
+    //     subProcess,
+    //     ()=>Promise.resolve().then(()=>{console.log(4)})
+    // ]
+    // process(processStep).catch((err) => {
+    //     console.log('err',err);
+    // });
+    // 方法2: 直接用await
+    auth = async(steps)=>{
+        let access = true
+        for(const step of steps){
+            if(access){
+                await step.promise().then(res=>{
+                    if(step.resolve){
+                        step.resolve()
+                    }
+                }).catch((err)=>{
+                    access = false
+                    if(step.reject){
+                        step.reject(err)
+                    }
+                    // throw new Error(`123`)
+                })
+            }
+        }
+    }
+    auth([
+        {
+            promise:() => Promise.resolve(1),
+            resolve:()=>{console.log(1)},
+            reject:()=>{console.log(1)}
+        },
+        {
+            promise:() => Promise.reject(2),
+            resolve:()=>{console.log(2)},
+            reject:(err)=>{console.log('err'+err)}
+        },
+        {
+            promise:() => Promise.resolve(3),
+            resolve:()=>{console.log(3)},
+            reject:()=>{console.log(3)}
+        }
+    ])
+</script>
+</html>
