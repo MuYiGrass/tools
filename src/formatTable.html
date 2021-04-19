@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>提取table内的text</title>
 </head>
 <style>
     .table-container table{
@@ -15,12 +15,12 @@
 </style>
 <body>
     <div class="table-container">
-
         <table>
-            <tr>
+            <!-- <tr>
                 <td>
                     <p>单元格1-1</p>
                     <p>单元格1-1-2</p>
+                    <p> </p>
                 </td>
                 <td>
                     <p>单元格1-2</p>
@@ -28,13 +28,13 @@
                 <td>
                     <p>单元格1-3</p>
                 </td>
-            </tr>
-            <tr>
+            </tr> -->
+            <!-- <tr>
                 <td>
                     <p>单元格3-1</p>
                     <p>单元格3-2</p>
                 </td>
-            </tr>
+            </tr> -->
             <tr>
                 <td>
                     <table>
@@ -47,6 +47,7 @@
                                 <p>
                                     子段落1-2-2
                                 </p>
+                                <p> </p>
                             </td>
                         </tr>
                         <!-- 相同节点内容，需要都提取内容 -->
@@ -57,6 +58,7 @@
                         <tr>
                             <td>子段落2-1</td>
                             <td>子段落2-2</td>
+                            <td>单元格3-1</td>
                         </tr>
                     </table>
                 </td>
@@ -67,7 +69,7 @@
     </div>
 </body>
 <script>  
-    // 版本一
+    // 版本一(相同内容的dom会提取成一个)
     // const getTdList = (ele)=> Array.from(ele.querySelectorAll('td'))
     // const find = (root, tdList=getTdList(root))=>{
     //     const result = tdList.map((td)=>{
@@ -77,19 +79,22 @@
     //         }else{
     //             return td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>`)
     //         }
-    //         console.log('result',result)
     //     })
     //     return result.flat(Infinity).filter(s=>s)
     // }
-    // const joinTd = (id)=>[...new Set(find(document.querySelector(id)))].join('\n')
 
+    // // 去重，防止a包含b，导致b被提取两次;会导致相同内容的单元格只提取一次
+    // const joinTd = (id)=>[...new Set(find(document.querySelector(id)))].join('\n')
     // document.querySelector('.replace-result').innerHTML = joinTd('.table-container')
+
     // 版本二
     // const getTdList = (el) => Array.from(el.querySelectorAll("td"));
+    // // 判断list中是否有元素为 td 的父元素或祖先元素
     // const is = (list, td) => list.some((i) => td !== i && i.contains(td));
     // const find = (root, tdList = getTdList(root)) => {
     //     const result = tdList.map((td) => {
     //         const childTd = getTdList(td);
+    //         // 当前tdList中 td为其他元素子元素
     //         if (is(tdList, td)) return "";
     //         if (childTd.length) {
     //             return find(td, childTd);
@@ -102,40 +107,33 @@
     // const joinTd = (id) => find(document.querySelector(id)).join("\n");
     // document.querySelector('.replace-result').innerHTML = joinTd('.table-container')
     // 版本三
-    const getTdList = (el) => Array.from(el.querySelectorAll("td"));
-    const is = (list, td) => list.some((i) => td !== i && i.contains(td));
+    // const getTdList = (el) => Array.from(el.querySelectorAll("td"));
+    // const is = (list, td) => list.some((i) => td !== i && i.contains(td));
 
-    const find = (root, tdList = getTdList(root)) => {
-        const result = tdList.map((td) => {
-            const childTd = getTdList(td);
-            if (is(tdList, td)) return "";
-            return childTd.length? find(td, childTd):td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`);
-        })
-        return result.flat(Infinity).filter((s) => s);
-        // return tdList.map((td) => {
-        //     const childTd = getTdList(td);
-        //     if (is(tdList, td)) return "";
-        //     return childTd.length? find(td, childTd):td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`).flat(Infinity).filter((s) => s);
-        // })
-    };
-    const joinTd = (id) => find(document.querySelector(id)).join("\n");
-    document.querySelector('.replace-result').innerHTML = joinTd('.table-container')
-// 
+    // const find = (root, tdList = getTdList(root)) => {
+    //     const result = tdList.map((td) => {
+    //         const childTd = getTdList(td);
+    //         if (is(tdList, td)) return "";
+    //         return childTd.length? find(td, childTd):td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`);
+    //     })
+    //     return result.flat(Infinity).filter((s) => s);
+    //     // return tdList.map((td) => {
+    //     //     const childTd = getTdList(td);
+    //     //     if (is(tdList, td)) return "";
+    //     //     return childTd.length? find(td, childTd):td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`).flat(Infinity).filter((s) => s);
+    //     // })
+    // };
+    // const joinTd = (id) => find(document.querySelector(id)).join("\n");
+    // document.querySelector('.replace-result').innerHTML = joinTd('.table-container')
+// 最终版
 const getTdList = (el) => Array.from(el.querySelectorAll("td"));
     const is = (list, td) => list.some((i) => td !== i && i.contains(td));
-
     const find = (root, tdList = getTdList(root)) => {
-        const result = tdList.map((td) => {
+        return tdList.map((td) => {
             const childTd = getTdList(td);
             if (is(tdList, td)) return "";
             return childTd.length? find(td, childTd):td.innerText
-        })
-        return result.flat(Infinity).filter((s) => s);
-        // return tdList.map((td) => {
-        //     const childTd = getTdList(td);
-        //     if (is(tdList, td)) return "";
-        //     return childTd.length? find(td, childTd):td.innerText.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`).flat(Infinity).filter((s) => s);
-        // })
+        }).flat(Infinity).filter((s) => s);
     };
     const joinTd = (id) => find(document.querySelector(id))
     .map((s)=>s.replace(/\n?(.+)\n?/g, `<p>$1</p>\n`))
@@ -143,3 +141,4 @@ const getTdList = (el) => Array.from(el.querySelectorAll("td"));
     document.querySelector('.replace-result').innerHTML = joinTd('.table-container')
 </script>
 </html>
+
