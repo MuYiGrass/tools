@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <svg width="500" height="500"></svg>
+    <script src="http://s.thsi.cn/js/datav/lib/d3.v5.min.js"></script>
+    <script>
+        var svg = d3.select("svg")
+        var width = svg.attr("width")
+        var height = svg.attr("height")
+        var g = svg.append("g")
+        //	准备数据
+        var nodes = [{
+            name: "A",
+            type: '1',
+        },
+        {
+            name: "B",
+            type: '1',
+        },
+        {
+            name: "C",
+            type: '2',
+        },
+        {
+            name: "D",
+            type: '2',
+        },
+        {
+            name: "E",
+            type: '2',
+        },
+        {
+            name: "F",
+            type: '2',
+        },
+        {
+            name: "G",
+            type: '3',
+        },
+        {
+            name: "H",
+            type: '3',
+        },
+        {
+            name: "I",
+            type: '3',
+        },
+        {
+            name: "J",
+            type: '4',
+        },
+        {
+            name: "K",
+            type: '4',
+        },
+        {
+            name: "L",
+            type: '4',
+        },
+        ];
+        var colorArr = ['rgb(255, 0, 0)', 'rgb(60, 179, 113)', 'rgb(255, 165, 0)', 'rgb(0, 0, 255)', 'rgb(106, 90, 205)']
+
+        var edges = [{
+            source: 0,
+            target: 1
+        },
+        {
+            source: 0,
+            target: 2
+        },
+        {
+            source: 0,
+            target: 3
+        },
+        {
+            source: 1,
+            target: 4
+        },
+        {
+            source: 1,
+            target: 5
+        },
+        {
+            source: 1,
+            target: 6
+        },
+        {
+            source: 4,
+            target: 7
+        },
+        {
+            source: 4,
+            target: 8
+        },
+        {
+            source: 4,
+            target: 9
+        },
+        {
+            source: 7,
+            target: 10
+        },
+        {
+            source: 7,
+            target: 11
+        }
+        ];
+
+        var linkGroup = [];
+        edges.forEach(e => {
+            linkGroup[e.source + ',' + e.target] = 1;
+            linkGroup[e.target + ',' + e.source] = 1;
+        })
+
+        //新建一个力导向图
+        var forceSimulation = d3.forceSimulation(nodes)
+            .force("charge", d3.forceManyBody())
+            .force("link", d3.forceLink(edges))
+            .force("center", d3.forceCenter());
+
+        //生成节点数据
+        forceSimulation.nodes(nodes)
+            .on("tick", ticked);
+
+        //生成边数据
+        forceSimulation.force("link")
+            .links(edges)
+            .distance(50)
+            .strength(0.9)
+
+        //设置图形的中心位置	
+        forceSimulation.force("center")
+            .x(width / 2)
+            .y(height / 2);
+
+        //绘制边
+        var links = g.append("g")
+            .selectAll("line")
+            .data(edges)
+            .enter()
+            .append("line")
+            .attr("stroke", '#000')
+            .attr("stroke-width", 1);
+
+        var gs = g.selectAll(".circleText")
+            .data(nodes)
+            .enter()
+            .append("g")
+            .attr("transform", function (d, i) {
+                var cirX = d.x;
+                var cirY = d.y;
+                return "translate(" + cirX + "," + cirY + ")";
+            })
+            .call(d3.drag()
+                .on("start", started)
+                .on("drag", dragged)
+                .on("end", ended)
+            );
+        gs.on("click", clicked);
+
+        //绘制节点
+        gs.append("circle")
+            .attr("r", 10)
+            .style("fill", function (d) {
+                return colorArr[Number(d.type)];
+            })
+
+        //文字
+        gs.append("text")
+            .attr("x", -10)
+            .attr("y", 30)
+            .text(function (d) {
+                return d.name;
+            })
+
+        function ticked() {
+            links
+                .attr("x1", function (d) {
+                    return d.source.x;
+                })
+                .attr("y1", function (d) {
+                    return d.source.y;
+                })
+                .attr("x2", function (d) {
+                    return d.target.x;
+                })
+                .attr("y2", function (d) {
+                    return d.target.y;
+                });
+            gs
+                .attr("transform", function (d) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                });
+        }
+
+        function clicked(d) {
+            d3.selectAll("circle")
+                // 点击时选出相邻的点设置透明度
+                .style("opacity", function (o) {
+                    return neighboring(d, o) ? 1 : 0.3;
+                });
+        }
+
+        function neighboring(a, b) {
+            return a.index == b.index || linkGroup[a.index + "," + b.index];
+        }
+
+        function started(d) {
+            if (!d3.event.active) {
+                forceSimulation.alphaTarget(0.8).restart(); //设置衰减系数，对节点位置移动过程的模拟，数值越高移动越快，数值范围[0，1]
+            }
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(d) {
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+        }
+
+        function ended(d) {
+            if (!d3.event.active) {
+                forceSimulation.alphaTarget(0);
+            }
+            d.fx = null;
+            d.fy = null;
+        }
+    </script>
+</body>
+
+</html>
