@@ -1,0 +1,64 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 忽略自动识别电话 -->
+    <meta name="format-detection" content="telephone=no" />
+    <!-- 忽略自动识别邮箱 -->
+    <meta name="format-detection" content="email=no" />
+    <!-- 忽略自动识别电话和邮箱 -->
+    <meta name="format-detection" content="telephone=no, email=no" />
+    <title>移动端H5</title>
+</head>
+<style>
+    a{
+        display: block;
+    }
+</style>
+
+<body>
+    <h2>HTML方向</h2>
+    <h3>调用系统功能</h3>
+    <div>
+        <a href="tel:15295738127">拨打电话</a>
+        <a href="sms:15295738127">发送短信</a>
+        <a href="mailto:244030798@wujunchen.com">发送邮件</a>
+        <p>
+            <span>选择照片或拍摄照片</span>
+            <input type="file" accept="image/*" />
+        </p>
+        <p>
+            <span>选择视频或拍摄视频</span>
+            <input type="file" accept="video/*" />
+        </p>
+        <p>
+            <span>多选文件</span>
+            <input type="file" multiple />
+        </p>
+    </div>
+
+    <h3>弹出数字键盘</h3>
+    <div>
+        <p>
+            <span>纯数字带#和*</span>
+            <input type="tel" />
+        </p>
+        <p>
+            <span>纯数字</span>
+            <input type="number" pattern="\d*" />
+        </p>
+    </div>
+
+    </div>
+    <h3>唤醒原生应用</h3>
+    <span>scheme://[path][?query]</span>
+    <a href="weixin://">打开微信</a>
+    <a href="alipays://">打开支付宝</a>
+    <a href="alipays://platformapi/startapp?saId=10000007">打开支付宝的扫一扫</a>
+    <a href="alipays://platformapi/startapp?appId=60000002">打开支付宝的蚂蚁森林</a>
+    
+</body>
+
+</html>

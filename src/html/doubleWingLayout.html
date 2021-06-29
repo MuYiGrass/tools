@@ -33,14 +33,14 @@
     }
 
     #middle {
-        /* background: pink;
+        background: pink;
         width: 100%;
         float: left;
-        height: 200px; */
+        height: 200px;
     }
 
     #content {
-        /* overflow: hidden; */
+        overflow: hidden;
     }
 
     #left {
@@ -54,7 +54,19 @@
     }
 
     .middle-inner {
-        /* margin: 0 200px; */
+        margin: 0 200px;
+    }
+    .test-container{
+        height:350px;
+        overflow: scroll;
+       
+    }
+    .test-son{
+        height:550px;
+        border:solid red 10px;
+        padding:20px;
+        background-color: blue;
+       
     }
 </style>
 
@@ -72,6 +84,22 @@
         </div>
         <div id="footer">footer</div>
     </div>
+    <div class="test-container">
+        <div class="test-son">
+            123
+        </div>
+    </div>
 </body>
-
 </html>
+
+<template>
+    <div class="deferred-on">
+      <template v-if="defer(2)">
+        <Heavy v-for="n in 8" :key="n"/>
+      </template>
+      <Heavy v-if="defer(3)" class="super-heavy" :n="9999999"/>
+    </div>
+</template>
+  
+
+  
