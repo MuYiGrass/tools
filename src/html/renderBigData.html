@@ -1,0 +1,170 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <ul id="container"></ul>
+    <template>
+        <div ref="list" class="infinite-list-container" @scroll="scrollEvent($event)">
+            <div class="infinite-list-phantom" :style="{ height: listHeight + 'px' }"></div>
+            <div class="infinite-list" :style="{ transform: getTransform }">
+                <div ref="items" class="infinite-list-item" v-for="item in visibleData" :key="item.id"
+                    :style="{ height: itemSize + 'px',lineHeight: itemSize + 'px' }">{{ item.value }}</div>
+            </div>
+        </div>
+    </template>
+</body>
+<script>
+    // 1.一次性渲染
+    // let now = new Date()
+    // const total = 100000;
+    // let ul = document.querySelector('#container')
+    // for (let i = 0; i < total; i++) {
+    //     let li = document.createElement('li')
+    //     li.innerText = ~~(Math.random() * total)
+    //     ul.appendChild(li)
+    // }
+    // console.log('JS运行时间：', Date.now() - now);
+    // setTimeout(() => {
+    //     console.log('总运行时间：', Date.now() - now);
+    // }, 0)
+    // 2.定时器渲染
+    // 需要插入的容器
+    // let ul = document.getElementById('container');
+    // // 插入十万条数据
+    // let total = 100000;
+    // // 一次插入 20 条
+    // let once = 20;
+    // //总页数
+    // let page = total / once
+    // //每条记录的索引
+    // let index = 0;
+    // //循环加载数据
+    // function loop(curTotal, curIndex) {
+    //     if (curTotal <= 0) {
+    //         return false;
+    //     }
+    //     //每页多少条
+    //     let pageCount = Math.min(curTotal, once);
+    //     setTimeout(() => {
+    //         for (let i = 0; i < pageCount; i++) {
+    //             let li = document.createElement('li');
+    //             li.innerText = curIndex + i + ' : ' + ~~(Math.random() * total)
+    //             ul.appendChild(li)
+    //         }
+    //         loop(curTotal - pageCount, curIndex + pageCount)
+    //     }, 0)
+    // }
+    // loop(total, index);
+
+    // 3. requestAnimateFrame
+    //需要插入的容器
+    // let ul = document.getElementById('container');
+    // // 插入十万条数据
+    // let total = 100000;
+    // // 一次插入 20 条
+    // let once = 20;
+    // //总页数
+    // let page = total / once
+    // //每条记录的索引
+    // let index = 0;
+    // //循环加载数据
+    // function loop(curTotal, curIndex) {
+    //     if (curTotal <= 0) {
+    //         return false;
+    //     }
+    //     //每页多少条
+    //     let pageCount = Math.min(curTotal, once);
+    //     window.requestAnimationFrame(function () {
+    //         for (let i = 0; i < pageCount; i++) {
+    //             let li = document.createElement('li');
+    //             li.innerText = curIndex + i + ' : ' + ~~(Math.random() * total)
+    //             ul.appendChild(li)
+    //         }
+    //         loop(curTotal - pageCount, curIndex + pageCount)
+    //     })
+    // }
+    // loop(total, index);
+    // 4.虚拟列表
+    // 假定可视区域高度固定，称之为screenHeight
+    // 假定列表每项高度固定，称之为itemSize
+    // 假定列表数据称之为listData
+    // 假定当前滚动位置称之为scrollTop
+
+    // 列表总高度listHeight = listData.length * itemSize
+    // 可显示的列表项数visibleCount = Math.ceil(screenHeight / itemSize)
+    // 数据的起始索引startIndex = Math.floor(scrollTop / itemSize)
+    // 数据的结束索引endIndex = startIndex + visibleCount
+    // 列表显示数据为visibleData = listData.slice(startIndex,endIndex)
+    // 偏移量startOffset = scrollTop - (scrollTop % itemSize);
+    export default {
+        name: 'VirtualList',
+        props: {
+            //所有列表数据
+            listData: {
+                type: Array,
+                default: () => []
+            },
+            //每项高度
+            itemSize: {
+                type: Number,
+                default: 200
+            }
+        },
+        computed: {
+            //列表总高度
+            listHeight() {
+                return this.listData.length * this.itemSize;
+            },
+            //可显示的列表项数
+            visibleCount() {
+                return Math.ceil(this.screenHeight / this.itemSize)
+            },
+            //偏移量对应的style
+            getTransform() {
+                return `translate3d(0,${this.startOffset}px,0)`;
+            },
+            //获取真实显示列表数据
+            visibleData() {
+                return this.listData.slice(this.start, Math.min(this.end, this.listData.length));
+            }
+        },
+        mounted() {
+            this.screenHeight = this.$el.clientHeight;
+            this.start = 0;
+            this.end = this.start + this.visibleCount;
+        },
+        data() {
+            return {
+                //可视区域高度
+                screenHeight: 0,
+                //偏移量
+                startOffset: 0,
+                //起始索引
+                start: 0,
+                //结束索引
+                end: null,
+            };
+        },
+        methods: {
+            scrollEvent() {
+                //当前滚动位置
+                let scrollTop = this.$refs.list.scrollTop;
+                //此时的开始索引
+                this.start = Math.floor(scrollTop / this.itemSize);
+                //此时的结束索引
+                this.end = this.start + this.visibleCount;
+                //此时的偏移量
+                this.startOffset = scrollTop - (scrollTop % this.itemSize);
+            }
+        }
+    };
+
+</script>
+
+</html>
