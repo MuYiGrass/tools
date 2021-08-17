@@ -1,26 +1,19 @@
-let timeMap = {};
-let id = 0; // 简单实现id唯一
-const mySetInterval = (cb, time) => {
-  let timeId = id; // 将timeId赋予id
-  id++ // id 自增实现唯一id
-  let fn = () => {
-    cb();
-    timeMap[timeId] = setTimeout(() => {
-      fn();
-    }, time)
-  }
-  timeMap[timeId] = setTimeout(fn, time);
-  return timeId; // 返回timeId
+// setTimeout 校正
+function timer () {
+    var speed = 500
+    var counter = 1
+    var start = new Date().getTime();
+
+    function instance () {
+        var ideal = (counter * speed)
+        var real = (new Date().getTime() - start);
+        counter++;
+        var diff = (real - ideal);
+        // form.diff.value = diff;
+        window.setTimeout(function () { instance(); }, (speed - diff)); // 通过系统时间进行修复
+    };
+
+    window.setTimeout(function () { instance(); }, speed);
 }
 
-
-const myClearInterval = (id) => {
-    clearTimeout(timeMap[id]) // 通过timeMap[id]获取真正的id
-    delete timeMap[id]
-  }
-  
-
-
-  Promise.resolve().then(res => {return 1}).then((res)=>{console.log(res)})
-   
 

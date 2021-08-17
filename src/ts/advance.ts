@@ -68,3 +68,6 @@ interface API {
 const get = <URL extends keyof API>(url: URL): Promise<API[URL]> => {
     return fetch(url).then(res => res.json())
 }
+
+
+
